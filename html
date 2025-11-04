@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Student Budget and Expense Tracker</title>
+  <link rel="stylesheet" href="G1.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #3399FF;
+      color: #f8f7f7;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #000066;
+      padding: 8px;
+      text-align: left;
+      background-color: white;
+      color: black;
+    }
+    th {
+      background-color: #000066;
+      color: white;
+    }
+    .summary {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1 class="tracker-header">Student Budget and Expense Tracker</h1>
+
+  <form id="recordForm">
+    <div id="balanceDisplay" style="font-weight: bold; margin-bottom: 10px;"></div>
+
+    <label style="font-weight: bold;">Budget:</label><br />
+    <input type="number" id="budgetInput" placeholder="Enter Budget"><br /><br />
+
+    <label style="font-weight: bold;">Description:</label><br/>
+    <input type="text" id="descriptionInput"><br /><br />
+
+    <label style="font-weight: bold;">Category:</label><br />
+    <select id="categoryInput" required>
+      <option value="">----Select Category----</option>
+      <option value="Transportation">Transportation</option>
+      <option value="School Stuff">School Stuff</option>
+      <option value="Food">Food</option>
+      <option value="Health">Health</option>
+      <option value="Work Income">Work Income</option>
+      <option value="Financial Scholarship">Financial Scholarship</option>
+      <option value="Other">Other</option>
+    </select><br /><br />
+
+    <label style="font-weight: bold;">Expenses:</label><br />
+    <input type="number" id="expensesInput" required><br/><br/>
+
+    <label style="font-weight: bold;">Date:</label><br />
+    <input type="date" id="dateInput"><br /><br />
+
+    <button type="button" onclick="saveRecord()">Save</button>
+  </form>
+
+  <div class="summary" id="summary"></div>
+
+  <h2>History</h2>
+  <table id="recordsTable">
+    <tr><th>Budget</th><th>Description</th><th>Category</th><th>Spending</th><th>Date</th><th>Action</th></tr>
+  </table>
+
+  <script>
+    const DB_KEY = 'students_db_v1';
+    let db = [];
+
+    function loadDB() {
+      const raw = localStorage.getItem(DB_KEY);
+      db = raw ? JSON.parse(raw) : [];
+      displayRecords();
+    }
+
+    function saveDB() {
+      localStorage.setItem(DB_KEY, JSON.stringify(db));
+    }
+
+    function displayRecords() {
+      const table = document.getElementById('recordsTable');
+      table.innerHTML = '<tr><th>Budget</th><th>Description</th><th>Category</th><th>Spending</th><th>Date</th><th>Action</th></tr>';
+      let totalBudget = 0, totalExpenses = 0;
+
+      db.forEach((r, index) => {
+        totalBudget += parseFloat(r.Budget || 0);
+        totalExpenses += parseFloat(r.Expenses || 0);
+        table.innerHTML += `<tr>
+          <td>₱${r.Budget}</td>
+          <td>${r.Description}</td>
+          <td>${r.Category}</td>
+          <td>₱${r.Expenses}</td>
+          <td>${r.Date}</td>
+          <td>
+            <button onclick="editRecord(${index})">Edit</button>
+            <button onclick="deleteRecord(${index})">Delete</button>
+          </td>
+        </tr>`;
+      });
+
+      const remaining = totalBudget - totalExpenses;
+      document.getElementById('summary').innerText =
+        `Total Budget: ₱${totalBudget.toFixed(2)} | Total Expenses: ₱${totalExpenses.toFixed(2)}`;
+      document.getElementById('balanceDisplay').innerText =
+        `Current Balance: ₱${remaining.toFixed(2)}`;
+    }
+
+    function saveRecord() {
+      const Budget = document.getElementById('budgetInput').value;
+      const Description = document.getElementById('descriptionInput').value;
+      const Category = document.getElementById('categoryInput').value;
+      const Expenses = document.getElementById('expensesInput').value;
+      const Date = document.getElementById('dateInput').value;
+
+      const newRecord = { Budget, Description, Category, Expenses, Date };
+      db.push(newRecord);
+      saveDB();
+      document.getElementById('recordForm').reset();
+      displayRecords();
+    }
+
+    function editRecord(index) {
+      const record = db[index];
+      document.getElementById('budgetInput').value = record.Budget;
+      document.getElementById('descriptionInput').value = record.Description;
+      document.getElementById('categoryInput').value = record.Category;
+      document.getElementById('expensesInput').value = record.Expenses;
+      document.getElementById('dateInput').value = record.Date;
+      db.splice(index, 1);
+      saveDB();
+      displayRecords();
+    }
+
+    function deleteRecord(index) {
+      if (!confirm("Delete this record?")) return;
+      db.splice(index, 1);
+      saveDB();
+      displayRecords();
+    }
+
+    loadDB();
+  </script>
+</body>
+</html>
